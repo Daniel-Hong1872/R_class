@@ -27,3 +27,4 @@ day8_w<-rairuoho %>% filter(treatment=="water") %>% pull(day8)
 pearson(day3_w, day4_w)
 pearson(day3_w, day8_w)
 
+#nihaoma
