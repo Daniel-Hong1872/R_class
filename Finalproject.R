@@ -31,7 +31,8 @@ leaflet() %>%
     radius = 2,
     fillOpacity = 0.6,
     color = spawning.country$color)
-----#trials----
+
+#trials----
 # Genus vs. DoSRtNFM
 genus.day <- ggplot(data = spawning.country,
                     aes(x = Genus, y = DoSRtNFM))+
@@ -44,27 +45,26 @@ Country.day <- ggplot(data = spawning.country,
   geom_boxplot()
 Country.day
 
-------#twjp--------
-
+#twjp----
 spawning.tw.jp <- raw.data %>% 
   filter(Country %in% c('Japan', 'Taiwan')) %>%
-  filter(Genus %in% c('Galaxea', 'Lobophyllia', 'Coelastrea', 'Dipsastraea', 'Favites', 
-                      'Goniastrea', 'Platygyra', 'Porites'))
-spawning.tw.jp[ , c('Subsite', 'O_n', 'Depth_m', 'N', 'No_start', 'Quality_start', 'No_end', 'Quality_end', 
-                      'Gamete_release', 'Situation', 'Timezone', 'Reference', 'Comments')] <- list(NULL)
+  filter(Genus %in% c('Galaxea', 'Lobophyllia', 'Coelastrea', 
+                      'Dipsastraea', 'Favites', 'Goniastrea', 
+                      'Platygyra', 'Porites'))
+spawning.tw.jp[ , c('Subsite', 'O_n', 'Depth_m', 'N', 'No_start', 'Quality_start', 'No_end', 'Quality_end', 'Gamete_release', 'Situation', 'Timezone', 'Reference', 'Comments')] <- list(NULL)
 
 genus.tj.day <- ggplot(data = spawning.tw.jp,
                     aes(x = Genus, y = DoSRtNFM, color = Country))+
   geom_boxplot()
 genus.tj.day
 
-----#anova&tukey
-spawning.aov <- aov(DoSRtNFM ~ Genus + Genus %in% Country, data = spawning.tw.jp)
+#anova&tukey----
+spawning.aov <- aov(DoSRtNFM ~ Genus + Country %in% Genus, data = spawning.tw.jp)
 summary(spawning.aov)
 
-TukeyHSD(spawning.aov)
+TukeyHSD(spawning.aov, which = "Genus:Country")
 
-----#filter----
+#filter----
 Coelastrea <- spawning.tw.jp %>%
   filter(Genus %in% "Coelastrea",
          Country %in% c("Taiwan", "Japan"))
@@ -77,7 +77,7 @@ Dipsastraea <- spawning.tw.jp %>%
 Dipsastraea.aov <- aov(DoSRtNFM ~ Country, data = Dipsastraea)
 summary(Dipsastraea.aov)
 
-----# with fiji----
+# with fiji----
 spawning.tw.jp.f <- raw.data %>% 
   filter(Country %in% c('Japan', 'Taiwan', 'Fiji')) %>%
   filter(Genus %in% c('Diploastrea', 'Galaxea', 'Lobophyllia', 'Coelastrea', 'Dipsastraea', 'Favites', 
