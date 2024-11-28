@@ -1,26 +1,28 @@
+library(tidyr)
 library(dplyr)
 library(terra)
 library(rgbif)
 library(sp)
 library(leaflet)
 library(ggplot2)
+library(emmeans)
 
 raw.data <- read.csv("data/CSD_Tables.csv")
 
-# select the countries needed 
+#select the countries needed----
 spawning.country <- raw.data %>% 
   filter(Country %in% c('Indonesia', 'Japan', 'Philippines', 'Taiwan', 'Australia', 'Fiji')) %>%
   filter(Genus %in% c('Diploastrea', 'Galaxea', 'Lobophyllia', 'Coelastrea', 'Dipsastraea', 'Favites', 
                         'Goniastrea', 'Leptoria', 'Merulina', 'Pectinia', 'Platygyra', 'Porites'))
-  
-# delete the unneeded columns
+
+#delete the unneeded columns----
 spawning.country[ , c('Subsite', 'O_n', 'Depth_m', 'N', 'No_start', 'Quality_start', 'No_end', 'Quality_end', 
                       'Gamete_release', 'Situation', 'Timezone', 'Reference', 'Comments')] <- list(NULL)
 spawning.country$color <- ifelse(spawning.country$Country == "Japan", " #ee2c2c",
                                 ifelse(spawning.country$Country == "Taiwan", "dodgerblue",
                                        ifelse(spawning.country$Country == "Philippines","forestgreen", "gold")))
 
-# Mapping
+#Mapping----
 leaflet() %>%
   addTiles() %>%
   setView(lng = 121.0, lat = 20, zoom = 3.5) %>% # Center the map on Taiwan
@@ -39,7 +41,7 @@ genus.day <- ggplot(data = spawning.country,
   geom_boxplot()
 genus.day
 
-#Country vs. DoSRtNFM
+#Country vs. DoSRtNFM----
 Country.day <- ggplot(data = spawning.country,
                     aes(x = Country, y = DoSRtNFM))+
   geom_boxplot()
@@ -57,6 +59,31 @@ genus.tj.day <- ggplot(data = spawning.tw.jp,
                     aes(x = Genus, y = DoSRtNFM, color = Country))+
   geom_boxplot()
 genus.tj.day
+
+#check residual----
+model <- aov(DoSRtNFM ~ Genus + Country * Genus, data = spawning.tw.jp)
+summary(model)
+plot(model, which=c(1,2))
+
+#emmeans----
+ #Ho: In different Genus, Japan=Taiwan
+ #H1: In different Genus, Japan is not equal to Taiwan
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Genus='Coelastrea'), Country=c('Japan', 'Taiwan'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Dipsastraea'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Favites'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Galaxea'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Goniastrea'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Lobophyllia'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Platygyra'))
+emmeans(model, specs= pairwise~Country * Genus, 
+        at=list(Country=c('Japan', 'Taiwan'), Genus='Porites'))
 
 #anova&tukey----
 spawning.aov <- aov(DoSRtNFM ~ Genus + Country %in% Genus, data = spawning.tw.jp)
@@ -77,7 +104,7 @@ Dipsastraea <- spawning.tw.jp %>%
 Dipsastraea.aov <- aov(DoSRtNFM ~ Country, data = Dipsastraea)
 summary(Dipsastraea.aov)
 
-# with fiji----
+#plus fiji----
 spawning.tw.jp.f <- raw.data %>% 
   filter(Country %in% c('Japan', 'Taiwan', 'Fiji')) %>%
   filter(Genus %in% c('Diploastrea', 'Galaxea', 'Lobophyllia', 'Coelastrea', 'Dipsastraea', 'Favites', 
@@ -89,4 +116,17 @@ genus.tjf.day <- ggplot(data = spawning.tw.jp.f,
   geom_boxplot()
 genus.tjf.day
 
+# split date----
+split.data <- raw.data %>%
+  separate(Date, into = c("date", "month", "year"), sep = "/")
+max(summary(as.factor(split.data$year))) #use 2016 data
 
+class(split.data$date)
+class(split.data$month)
+
+combine.date.2016 <- split.data %>% 
+  filter(year %in% "2016") %>% 
+  mutate(month_date = paste0(month, date))
+
+ggplot(combine.date.2016, aes(x = month_date, y = Site)) + geom_point() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
