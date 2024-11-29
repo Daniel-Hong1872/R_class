@@ -18,9 +18,10 @@ spawning.country <- raw.data %>%
 #delete the unneeded columns----
 spawning.country[ , c('Subsite', 'O_n', 'Depth_m', 'N', 'No_start', 'Quality_start', 'No_end', 'Quality_end', 
                       'Gamete_release', 'Situation', 'Timezone', 'Reference', 'Comments')] <- list(NULL)
-spawning.country$color <- ifelse(spawning.country$Country == "Japan", " #ee2c2c",
-                                ifelse(spawning.country$Country == "Taiwan", "dodgerblue",
-                                       ifelse(spawning.country$Country == "Philippines","forestgreen", "gold")))
+spawning.country$color <- 
+  ifelse(spawning.country$Country == "Japan", " #ee2c2c", 
+         ifelse(spawning.country$Country == "Taiwan", "dodgerblue", 
+                ifelse(spawning.country$Country == "Philippines","forestgreen", "gold")))
 
 #Mapping----
 leaflet() %>%
@@ -128,5 +129,4 @@ combine.date.2016 <- split.data %>%
   filter(year %in% "2016") %>% 
   mutate(month_date = paste0(month, date))
 
-ggplot(combine.date.2016, aes(x = month_date, y = Site)) + geom_point() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
