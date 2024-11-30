@@ -6,12 +6,13 @@ library(sp)
 library(leaflet)
 library(ggplot2)
 library(emmeans)
+library(RColorBrewer)
 
 raw.data <- read.csv("data/CSD_Tables.csv")
 
 #select the countries needed----
 spawning.country <- raw.data %>% 
-  filter(Country %in% c('Indonesia', 'Japan', 'Philippines', 'Taiwan', 'Australia', 'Fiji')) %>%
+  filter(Country %in% c('Japan', 'Taiwan')) %>%
   filter(Genus %in% c('Diploastrea', 'Galaxea', 'Lobophyllia', 'Coelastrea', 'Dipsastraea', 'Favites', 
                         'Goniastrea', 'Leptoria', 'Merulina', 'Pectinia', 'Platygyra', 'Porites'))
 
@@ -19,9 +20,7 @@ spawning.country <- raw.data %>%
 spawning.country[ , c('Subsite', 'O_n', 'Depth_m', 'N', 'No_start', 'Quality_start', 'No_end', 'Quality_end', 
                       'Gamete_release', 'Situation', 'Timezone', 'Reference', 'Comments')] <- list(NULL)
 spawning.country$color <- 
-  ifelse(spawning.country$Country == "Japan", " #ee2c2c", 
-         ifelse(spawning.country$Country == "Taiwan", "dodgerblue", 
-                ifelse(spawning.country$Country == "Philippines","forestgreen", "gold")))
+  ifelse(spawning.country$Country == "Japan", " #ee2c2c", "dodgerblue")
 
 #Mapping----
 leaflet() %>%
