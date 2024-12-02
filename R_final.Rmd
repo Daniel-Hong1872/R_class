@@ -1,3 +1,15 @@
+---
+title: "R Final Report: Coral Spawning"
+author: "Daniel, Annie, & River"
+date: "2024-11-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning=FALSE, message=FALSE}
 library(dplyr)
 library(leaflet)
 library(ggplot2)
@@ -6,10 +18,13 @@ library(forcats)
 library(tidyr)
 library(emmeans)
 library(RColorBrewer)
+```
 
-setwd("/Users/riversung/NTU/113-1 Fall 2024/Ocean5098 R/Rclass_Fall2024/Final project")
-raw.data <- read.csv("CSD_Tables.csv")
+```{r}
+raw.data <- read.csv("data/CSD_Tables.csv")
+```
 
+```{r}
 # select the countries needed (Taiwan & Japan)
 spawning.jptw <- raw.data %>% 
   filter(Country %in% c('Japan', 'Taiwan')) %>%
@@ -17,7 +32,7 @@ spawning.jptw <- raw.data %>%
 
 # delete the unneeded columns
 spawning.jptw[ , c('Subsite', 'O_n', 'Depth_m', 'N', 'No_start', 'Quality_start', 'No_end', 'Quality_end', 'Gamete_release', 'Situation', 'Timezone', 'Reference', 'Comments')] <- list(NULL)
-spawning.jptw$color <- ifelse(spawning.country$Country == "Japan", "#F8766D", "#00BFC4")
+spawning.jptw$color <- ifelse(spawning.jptw$Country == "Japan", "#F8766D", "#00BFC4")
 
 # Mapping
 leaflet() %>%
@@ -31,7 +46,10 @@ leaflet() %>%
     fillColor = spawning.jptw$color,
     fillOpacity = 1,
     stroke = F)
+```
 
+
+```{r}
 genus.tj.day <- ggplot(data = spawning.jptw, aes(x = Genus, y = DoSRtNFM, color = Country)) + 
   geom_boxplot() + 
   ggtitle("Spawning Time Comparison", subtitle = "different genus in Japan and Taiwan") + 
@@ -42,11 +60,13 @@ genus.tj.day <- ggplot(data = spawning.jptw, aes(x = Genus, y = DoSRtNFM, color 
 genus.tj.day
 
 #check residual----
-model <- aov(DoSRtNFM ~ Genus + Country * Genus, data = spawning.country)
+model <- aov(DoSRtNFM ~ Genus + Country * Genus, data = spawning.jptw)
 summary(model)
 par(mfrow=c(1,2))
 plot(model, which=c(1,2))
+```
 
+```{r}
 #emmeans----
 #Ho: In different Genus, Japan=Taiwan
 #H1: In different Genus, Japan is not equal to Taiwan
@@ -66,8 +86,9 @@ emmeans(model, specs= pairwise~Country * Genus,
         at=list(Country=c('Japan', 'Taiwan'), Genus='Platygyra'))
 emmeans(model, specs= pairwise~Country * Genus, 
         at=list(Country=c('Japan', 'Taiwan'), Genus='Porites'))
+```
 
-#separate the date----
+```{r}
 split.data <- raw.data %>%
   separate(Date, into = c("day", "month", "year"), sep = "/") %>% #先把年月日拆開才能篩選2016
   filter(year == 2016) %>%
@@ -91,7 +112,7 @@ i.want.set3 <- brewer.pal(length(unique(split.data$Country)), "Set3")
 #brewer.pal(n, "Set3")：從 RColorBrewer 的 Set3 調色板中提取 n 種顏色
 
 ggplot(split.data, aes(x =date.x, y = site.y, size = Count, color = Country)) +
-  geom_point(alpha = 0.4) +  
+  geom_point(alpha = 0.3) +  
   scale_size_continuous(name = "Count", range = c(2.5, 8)) +  # 調整點大小
   scale_color_manual(values = i.want.set3) +  
   scale_x_date(date_labels = "%m/%d", date_breaks = "1 month") +
@@ -102,12 +123,12 @@ ggplot(split.data, aes(x =date.x, y = site.y, size = Count, color = Country)) +
     color = "Country") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        plot.title = element_text(size=15.5),
+        plot.title = element_text(size=14.3, hjust = 0),
         scale_fill_discrete(name = "Country")) +
   guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
+```
 
-split.data$Country <- factor(split.data$Country)
-
+```{r}
 color_palette <- colorFactor(palette = "Set3", domain = levels(split.data$Country))
 leaflet(data = split.data) %>%
   addTiles() %>%
@@ -120,4 +141,20 @@ leaflet(data = split.data) %>%
     weight = 0.5,
     color = "black",
     fillColor = ~color_palette(Country))
+```
+
+
+
+
+
+
+
+## Introduction
+
+- map of coral spawning sites 
+
+
+
+
+## Discussion
 
