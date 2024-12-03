@@ -89,6 +89,14 @@ emmeans(model, specs= pairwise~Country * Genus,
 ```
 
 ```{r}
+split <- raw.data %>%
+  separate(Date, into = c("day", "month", "year"), sep = "/")
+summary(as.factor(split$year))
+max(summary(as.factor(split$year)))
+```
+
+
+```{r}
 split.data <- raw.data %>%
   separate(Date, into = c("day", "month", "year"), sep = "/") %>% #先把年月日拆開才能篩選2016
   filter(year == 2016) %>%
