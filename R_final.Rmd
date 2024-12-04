@@ -74,6 +74,7 @@ bc.data <- boxcox(lm(shifted.jptw ~ 1), lambda = seq(-2, 2, by = 0.1))
 spawning.jptw$sqDos <- shifted.jptw^2
 modelsq <- aov(sqDos ~ Genus + Country * Genus, data = spawning.jptw)
 summary(modelsq)
+par(mfrow=c(1,2))
 plot(modelsq, which = c(1, 2))
 ```
 
@@ -82,6 +83,7 @@ plot(modelsq, which = c(1, 2))
 spawning.jptw$logDoS <- log(spawning.jptw$DoSRtNFM + abs(min(spawning.jptw$DoSRtNFM)) + 1)
 modellog <- aov(logDoS ~ Genus + Country * Genus, data = spawning.jptw)
 summary(modellog)
+par(mfrow=c(1,2))
 plot(modellog, which = c(1, 2))
 ```
 
@@ -93,6 +95,7 @@ YJlambda <- trans.data$lambda
 spawning.jptw$YJ_DoS <- yjPower(spawning.jptw$DoSRtNFM, YJlambda)
 modelYJ <- aov(YJ_DoS ~ Genus + Country * Genus, data = spawning.jptw)
 summary(modelYJ)
+par(mfrow=c(1,2))
 plot(modelYJ, which = c(1, 2))
 ```
 
