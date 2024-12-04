@@ -7,8 +7,8 @@ library(tidyr)
 library(emmeans)
 library(RColorBrewer)
 
-setwd("/Users/riversung/NTU/113-1 Fall 2024/Ocean5098 R/Rclass_Fall2024/Final project")
-raw.data <- read.csv("CSD_Tables.csv")
+setwd("C:/Users/dan91/Rstudio/R_class")
+raw.data <- read.csv("data/CSD_Tables.csv")
 
 # select the countries needed (Taiwan & Japan)
 spawning.jptw <- raw.data %>% 
@@ -17,7 +17,7 @@ spawning.jptw <- raw.data %>%
 
 # delete the unneeded columns
 spawning.jptw[ , c('Subsite', 'O_n', 'Depth_m', 'N', 'No_start', 'Quality_start', 'No_end', 'Quality_end', 'Gamete_release', 'Situation', 'Timezone', 'Reference', 'Comments')] <- list(NULL)
-spawning.jptw$color <- ifelse(spawning.country$Country == "Japan", "#F8766D", "#00BFC4")
+spawning.jptw$color <- ifelse(spawning.jptw$Country == "Japan", "#F8766D", "#00BFC4")
 
 # Mapping
 leaflet() %>%
@@ -37,15 +37,39 @@ genus.tj.day <- ggplot(data = spawning.jptw, aes(x = Genus, y = DoSRtNFM, color 
   ggtitle("Spawning Time Comparison", subtitle = "different genus in Japan and Taiwan") + 
   ylab("DoSRtNFM (Date of Spawning Relative to Nearest Full Moon)") + 
   theme(
-    plot.title = element_text(size=20, margin = margin(b = 5)),
-    plot.subtitle = element_text(size=12, margin = margin(b = 5)))
+    plot.title = element_text(size=20),
+    plot.subtitle = element_text(size=12))
 genus.tj.day
 
 #check residual----
-model <- aov(DoSRtNFM ~ Genus + Country * Genus, data = spawning.country)
+model <- aov(DoSRtNFM ~ Genus + Country * Genus, data = spawning.jptw)
 summary(model)
-par(mfrow=c(1,2))
-plot(model, which=c(1,2))
+par(mfrow = c(1, 2))
+plot(model, which = c(1, 2))
+
+#boxcox----
+library(MASS)
+shifted.jptw <- spawning.jptw$DoSRtNFM + abs(min(spawning.jptw$DoSRtNFM)) + 1
+bc.data <- boxcox(lm(shifted.jptw ~ 1), lambda = seq(-2, 2, by = 0.1))
+spawning.jptw$sqDos <- shifted.jptw^2
+modelsq <- aov(sqDos ~ Genus + Country * Genus, data = spawning.jptw)
+summary(modelsq)
+plot(modelsq, which = c(1, 2))
+
+#log----
+spawning.jptw$logDoS <- log(spawning.jptw$DoSRtNFM + abs(min(spawning.jptw$DoSRtNFM)) + 1)
+modellog <- aov(logDoS ~ Genus + Country * Genus, data = spawning.jptw)
+summary(modellog)
+plot(modellog, which = c(1, 2))
+
+#Yeo-Johnson----
+library(car)
+trans.data <- powerTransform(spawning.jptw$DoSRtNFM ~ 1, family = "yjPower")
+YJlambda <- trans.data$lambda
+spawning.jptw$YJ_DoS <- yjPower(spawning.jptw$DoSRtNFM, YJlambda)
+modelYJ <- aov(YJ_DoS ~ Genus + Country * Genus, data = spawning.jptw)
+summary(modelYJ)
+plot(modelYJ, which = c(1, 2))
 
 #emmeans----
 #Ho: In different Genus, Japan=Taiwan
@@ -80,9 +104,8 @@ split.data <- raw.data %>%
 split.data <- split.data %>%
   left_join(
     raw.data %>%
-      select(Site, Longitude, Latitude) %>%
-      distinct(), # 去除重複的 Site 項
-    by = c("site.y" = "Site"))
+      select(Site, Latitude, Longitude) %>%
+      distinct(), by = c("site.y" = "Site"))
 
 i.want.set3 <- brewer.pal(length(unique(split.data$Country)), "Set3")
 #set1_colors：指定點點顏色為Set3！

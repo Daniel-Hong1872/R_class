@@ -48,17 +48,18 @@ leaflet() %>%
     stroke = F)
 ```
 
-
 ```{r}
 genus.tj.day <- ggplot(data = spawning.jptw, aes(x = Genus, y = DoSRtNFM, color = Country)) + 
   geom_boxplot() + 
   ggtitle("Spawning Time Comparison", subtitle = "different genus in Japan and Taiwan") + 
   ylab("DoSRtNFM (Date of Spawning Relative to Nearest Full Moon)") + 
   theme(
-    plot.title = element_text(size=20, margin = margin(b = 5)),
-    plot.subtitle = element_text(size=12, margin = margin(b = 5)))
+    plot.title = element_text(size=20),
+    plot.subtitle = element_text(size=12))
 genus.tj.day
+```
 
+```{r}
 #check residual----
 model <- aov(DoSRtNFM ~ Genus + Country * Genus, data = spawning.jptw)
 summary(model)
@@ -109,8 +110,8 @@ split.data <- split.data %>%
   left_join(
     raw.data %>%
       select(Site, Longitude, Latitude) %>%
-      distinct(), # 去除重複的 Site 項
-    by = c("site.y" = "Site"))
+      distinct(), by = c("site.y" = "Site")# 去除重複的 Site 項
+    )
 
 i.want.set3 <- brewer.pal(length(unique(split.data$Country)), "Set3")
 #set1_colors：指定點點顏色為Set3！
