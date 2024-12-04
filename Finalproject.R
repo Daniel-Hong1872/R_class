@@ -101,10 +101,10 @@ split.data <- raw.data %>%
   group_by(date.x, site.y, Country) %>%  # 處理點點大小：把同天site同country的數據分在同一坨
   summarise(Count = n())# n()功能可以算算同一坨有多少個。接著命名為 Count
 
-split.data <- split.data %>%
+split.data2 <- split.data %>%
   left_join(
     raw.data %>%
-      select(Site, Latitude, Longitude) %>%
+      dplyr::select(Site, Latitude, Longitude) %>%
       distinct(), by = c("site.y" = "Site"))
 
 i.want.set3 <- brewer.pal(length(unique(split.data$Country)), "Set3")
@@ -113,7 +113,7 @@ i.want.set3 <- brewer.pal(length(unique(split.data$Country)), "Set3")
 #length()：計算不重複值的數量，就是總共有幾個國家
 #brewer.pal(n, "Set3")：從 RColorBrewer 的 Set3 調色板中提取 n 種顏色
 
-ggplot(split.data, aes(x =date.x, y = site.y, size = Count, color = Country)) +
+ggplot(split.data2, aes(x =date.x, y = site.y, size = Count, color = Country)) +
   geom_point(alpha = 0.4) +  
   scale_size_continuous(name = "Count", range = c(2.5, 8)) +  # 調整點大小
   scale_color_manual(values = i.want.set3) +  
@@ -129,9 +129,9 @@ ggplot(split.data, aes(x =date.x, y = site.y, size = Count, color = Country)) +
         scale_fill_discrete(name = "Country")) +
   guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
 
-split.data$Country <- factor(split.data$Country)
+split.data2$Country <- factor(split.data2$Country)
 
-color_palette <- colorFactor(palette = "Set3", domain = levels(split.data$Country))
+color_palette <- colorFactor(palette = "Set3", domain = levels(split.data2$Country))
 leaflet(data = split.data) %>%
   addTiles() %>%
   addCircleMarkers(
