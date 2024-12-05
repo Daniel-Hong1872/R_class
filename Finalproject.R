@@ -41,55 +41,57 @@ genus.tj.day <- ggplot(data = spawning.jptw, aes(x = Genus, y = DoSRtNFM, color 
     plot.subtitle = element_text(size=12))
 genus.tj.day
 
-#check residual----
-model <- aov(DoSRtNFM ~ Genus + Country * Genus, data = spawning.jptw)
-summary(model)
+#check normality----
 par(mfrow = c(1, 2))
-plot(model, which = c(1, 2))
+hist(spawning.jptw$DoSRtNFM)
+qqnorm(spawning.jptw$DoSRtNFM, main = 'Normal')
+qqline(spawning.jptw$DoSRtNFM)
 
-#boxcox----
-library(MASS)
-shifted.jptw <- spawning.jptw$DoSRtNFM + abs(min(spawning.jptw$DoSRtNFM)) + 1
-bc.data <- boxcox(lm(shifted.jptw ~ 1), lambda = seq(-2, 2, by = 0.1))
-spawning.jptw$sqDos <- shifted.jptw^2
-modelsq <- aov(sqDos ~ Genus + Country * Genus, data = spawning.jptw)
-summary(modelsq)
-plot(modelsq, which = c(1, 2))
+#check data number----
+J.genus <- spawning.jptw %>% 
+          filter(Country == "Japan") %>% 
+          dplyr::select(Genus)
+summary(as.factor(J.genus$Genus))
+T.genus <- spawning.jptw %>% 
+  filter(Country == "Taiwan") %>% 
+  dplyr::select(Genus)
+summary(as.factor(T.genus$Genus))
 
-#log----
-spawning.jptw$logDoS <- log(spawning.jptw$DoSRtNFM + abs(min(spawning.jptw$DoSRtNFM)) + 1)
-modellog <- aov(logDoS ~ Genus + Country * Genus, data = spawning.jptw)
-summary(modellog)
-plot(modellog, which = c(1, 2))
+#wilcoxon----
+Coelastrea <- spawning.jptw %>%
+  filter(Genus %in% "Coelastrea",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Coelastrea)
 
-#Yeo-Johnson----
-library(car)
-trans.data <- powerTransform(spawning.jptw$DoSRtNFM ~ 1, family = "yjPower")
-YJlambda <- trans.data$lambda
-spawning.jptw$YJ_DoS <- yjPower(spawning.jptw$DoSRtNFM, YJlambda)
-modelYJ <- aov(YJ_DoS ~ Genus + Country * Genus, data = spawning.jptw)
-summary(modelYJ)
-plot(modelYJ, which = c(1, 2))
+Dipsastraea <- spawning.jptw %>%
+  filter(Genus %in% "Dipsastraea",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Dipsastraea)
 
-#emmeans----
-#Ho: In different Genus, Japan=Taiwan
-#H1: In different Genus, Japan is not equal to Taiwan
-emmeans(model, specs= pairwise~Country * Genus, 
-        at=list(Genus='Coelastrea'), Country=c('Japan', 'Taiwan'))
-emmeans(model, specs= pairwise~Country * Genus, 
-        at=list(Country=c('Japan', 'Taiwan'), Genus='Dipsastraea'))
-emmeans(model, specs= pairwise~Country * Genus, 
-        at=list(Country=c('Japan', 'Taiwan'), Genus='Favites'))
-emmeans(model, specs= pairwise~Country * Genus, 
-        at=list(Country=c('Japan', 'Taiwan'), Genus='Galaxea'))
-emmeans(model, specs= pairwise~Country * Genus, 
-        at=list(Country=c('Japan', 'Taiwan'), Genus='Goniastrea'))
-emmeans(model, specs= pairwise~Country * Genus, 
-        at=list(Country=c('Japan', 'Taiwan'), Genus='Lobophyllia'))
-emmeans(model, specs= pairwise~Country * Genus, 
-        at=list(Country=c('Japan', 'Taiwan'), Genus='Platygyra'))
-emmeans(model, specs= pairwise~Country * Genus, 
-        at=list(Country=c('Japan', 'Taiwan'), Genus='Porites'))
+Favites <- spawning.jptw %>%
+  filter(Genus %in% "Favites",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Favites)
+
+Galaxea <- spawning.jptw %>%
+  filter(Genus %in% "Galaxea",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Galaxea)
+
+Goniastrea <- spawning.jptw %>%
+  filter(Genus %in% "Goniastrea",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Goniastrea)
+
+Platygyra <- spawning.jptw %>%
+  filter(Genus %in% "Platygyra",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Platygyra)
+
+Porites <- spawning.jptw %>%
+  filter(Genus %in% "Porites",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Porites)
 
 #separate the date----
 split.data <- raw.data %>%
