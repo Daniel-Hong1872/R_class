@@ -30,3 +30,18 @@ tikus.bc <- vegdist(tikus.sel2)
 tikus.bc
 coldiss(tikus.bc,byrank=F,diag=T)
 qgraph(1-tikus.bc, layout='spring', vsize=4)
+
+tree1<-tree(Species~Sepal.Length + Sepal.Width + Petal.Length + Petal.Width, data=iris)
+summary(tree1)
+plot(tree1)
+text(tree1)
+
+tree2 <- rpart(Species ~ ., data=iris, method="class")
+fancyRpartPlot(tree2, main="Iris") # package rattle
+
+# Extra to exciting your curiosity
+iris.rf=randomForest(Species~., data=iris, importance=TRUE, proximity=TRUE, ntree=500)
+# Required number of trees gives errors for each species and the average for all species (black):
+plot(iris.rf,lty=2)
+
+
