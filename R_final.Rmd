@@ -154,7 +154,7 @@ i.want.set3 <- brewer.pal(length(unique(split.data$Country)), "Set3")
 
 ggplot(split.data2, aes(x =date.x, y = site.y, size = Count, color = Country)) +
   geom_point(alpha = 0.4) +  
-  scale_size_continuous(name = "Count", range = c(2.5, 8)) +  # 調整點大小
+  scale_size_continuous(name = "Count", range = c(2, 8)) +  # 調整點大小
   scale_color_manual(values = i.want.set3) +  
   scale_x_date(date_labels = "%m/%d", date_breaks = "1 month") +
   labs(
@@ -164,7 +164,6 @@ ggplot(split.data2, aes(x =date.x, y = site.y, size = Count, color = Country)) +
     color = "Country") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        plot.title = element_text(size=15.5),
         scale_fill_discrete(name = "Country")) +
   guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
 
