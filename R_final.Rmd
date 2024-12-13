@@ -81,9 +81,9 @@ sample size of *Lobophyllia* is too small, so there's no comparison below
 
 ***
 
-*H0:
+* H0:
 
-*H1:
+* H1:
 
 ```{r}
 #wilcoxon----
