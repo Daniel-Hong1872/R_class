@@ -99,7 +99,7 @@ split.data <- raw.data %>%
   filter(year == 2016) %>%
   mutate(
     date.x = as.Date(paste(year, month, day, sep = "-"), "%Y-%m-%d"),
-    site.y = fct_reorder(Site, Latitude, .desc = FALSE)) %>% # 根據緯度重新排列地點
+    site.y = fct_reorder(Site, Latitude)) %>% # 根據緯度重新排列地點
   group_by(date.x, site.y, Country) %>%  # 處理點點大小：把同天site同country的數據分在同一坨
   summarise(Count = n())# n()功能可以算算同一坨有多少個。接著命名為 Count
 
@@ -146,3 +146,8 @@ leaflet(data = split.data) %>%
     color = "black",
     fillColor = ~color_palette(Country))
 
+
+
+
+split.data %>% 
+  mutate(site.y = fct_reorder(Country, Latitude))

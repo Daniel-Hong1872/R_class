@@ -1,0 +1,472 @@
+---
+title: "R Final Report: Coral Spawning"
+author: "Daniel, Annie, & River"
+date: "2024-11-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+### Setting Up 
+```{r, warning=FALSE, message=FALSE}
+library(dplyr)
+library(leaflet)
+library(ggplot2)
+library(lubridate)
+library(forcats)
+library(tidyr)
+library(emmeans)
+library(RColorBrewer)
+```
+
+```{r}
+raw.data <- read.csv("data/CSD_Tables.csv")
+```
+  
+##### This report is generated based on the Indo-Pacific coral spawning dataset organized by Baird et al. (2021). Our basic understanding of the dataset and the formation of the research question is inspired by Lin et al. (2021).  
+
+### Introduction
+- Synchronized mass coral spawning is observed once a year worldwide and occurs days following a full moon.
+- The lunar cycle (tide and moonlight) regulates environmental changes that can be detected by corals to coordinate mass spawning. 
+- This dataset includes coral spawning observations in different eco-regions (Figure 1). 
+
+<style>
+.html-widget {
+    margin: auto;
+}
+</style>
+```{r, warning=F, echo=F, message=F, leaflet, fig.align="center", fig.cap="**Figure 1**: World map with all the observed coral spawning sites in 2016."}
+split.data <- raw.data %>%
+  separate(Date, into = c("day", "month", "year"), sep = "/") %>% #先把年月日拆開才能篩選2016
+  filter(year == 2016) %>%
+  mutate(
+    date.x = as.Date(paste(year, month, day, sep = "-"), "%Y-%m-%d"),
+    site.y = fct_reorder(Site, Latitude, .desc = FALSE)) %>% # 根據緯度重新排列地點
+  group_by(date.x, site.y, Country) %>%  # 處理點點大小：把同天site同country的數據分在同一坨
+  summarise(Count = n())# n()功能可以算算同一坨有多少個。接著命名為 Count
+
+split.data2 <- split.data %>%
+  left_join(
+    raw.data %>%
+      dplyr::select(Site, Latitude, Longitude) %>%
+      distinct(), by = c("site.y" = "Site"))
+
+i.want.set3 <- brewer.pal(length(unique(split.data$Country)), "Set3")
+
+color_palette <- colorFactor(palette = "Set3", domain = levels(split.data2$Country))
+leaflet(data = split.data2) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    lng = ~Longitude,
+    lat = ~Latitude,
+    popup = ~site.y,
+    fillOpacity = 1,
+    radius = 6,
+    weight = 0.5,
+    color = "black",
+    fillColor = ~color_palette(Country))
+```
+- The timing of synchronized mass coral spawning depends on whether coral gametes have matured yet. 
+- Gametes maturity varies between coral species and potentially influenced by environmental factors like temperature. 
+- We wonder whether there the coral spawning time is correlated with the latitude, where sites closer to the equator observe spawning earlier in the year. 
+- Zooming in the scope, we would also like to compare the spawning time of different coral genus between Taiwan and Japan (Figure 2). 
+
+<style>
+.html-widget {
+    margin: auto;
+}
+</style>
+```{r, warning=F, echo=F, message=F, fig.align="center", fig.cap="**Figure 2**: Map of coral spawning sites observed in Taiwan and Japan."}
+# select the countries needed (Taiwan & Japan)
+spawning.jptw <- raw.data %>% 
+  filter(Country %in% c('Japan', 'Taiwan')) %>%
+  filter(Genus %in% c('Galaxea', 'Lobophyllia', 'Coelastrea', 'Dipsastraea', 'Favites', 'Goniastrea', 'Platygyra', 'Porites'))
+
+# delete the unneeded columns
+spawning.jptw[ , c('Subsite', 'O_n', 'Depth_m', 'N', 'No_start', 'Quality_start', 'No_end', 'Quality_end', 'Gamete_release', 'Situation', 'Timezone', 'Reference', 'Comments')] <- list(NULL)
+spawning.jptw$color <- ifelse(spawning.jptw$Country == "Japan", "#F8766D", "#00BFC4")
+
+# Mapping
+leaflet() %>%
+  addTiles() %>%
+  setView(lng = 123, lat = 27, zoom = 4.5) %>% # Center the map on Taiwan
+  addCircleMarkers(
+    lng = spawning.jptw$Longitude,
+    lat = spawning.jptw$Latitude,
+    popup = spawning.jptw$Site,
+    radius = 5,
+    fillColor = spawning.jptw$color,
+    fillOpacity = 1,
+    stroke = F)
+```
+
+### Methods
+#### Spawning time and geolocation
+We downloaded the Indo-Pacific coral spawning database (Baird et al. 2021) from nature.com/sdata/. Using the `max` and `summary` functions, it is determined that the year 2016 has the most data entry. Using the `ggplot2` package, we plot the spawning data (date and location) from 2016. 
+
+```{r, warning=F}
+split <- raw.data %>%
+  separate(Date, into = c("day", "month", "year"), sep = "/")
+summary(as.factor(split$year))
+max(summary(as.factor(split$year))) # deternine most data year
+```
+
+##### Spawning data from Taiwan and Japan
+Using the `filter` function, we selected the genus that have spawning data in both Taiwan and Japan. We then made a boxplot to compare their *date of spawning relative to nearest full moon (DoSRtNFM).   
+
+Normality, Wilcoxon 
+```{r}
+# select the countries needed (Taiwan & Japan)
+spawning.jptw <- raw.data %>% 
+  filter(Country %in% c('Japan', 'Taiwan')) %>%
+  filter(Genus %in% c('Galaxea', 'Lobophyllia', 'Coelastrea', 'Dipsastraea', 'Favites', 'Goniastrea', 'Platygyra', 'Porites'))
+
+# delete the unneeded columns
+spawning.jptw[ , c('Subsite', 'O_n', 'Depth_m', 'N', 'No_start', 'Quality_start', 'No_end', 'Quality_end', 'Gamete_release', 'Situation', 'Timezone', 'Reference', 'Comments')] <- list(NULL)
+spawning.jptw$color <- ifelse(spawning.jptw$Country == "Japan", "#F8766D", "#00BFC4")
+```
+
+### Results
+#### Spawning time and geolocation
+result here
+```{r, warning=F, echo=F, message=F, fig.align='center', fig.cap="**Figure 3**:_________"}
+split.data <- raw.data %>%
+  separate(Date, into = c("day", "month", "year"), sep = "/") %>% #先把年月日拆開才能篩選2016
+  filter(year == 2016) %>%
+  mutate(
+    date.x = as.Date(paste(year, month, day, sep = "-"), "%Y-%m-%d"),
+    site.y = fct_reorder(Site, Latitude)) %>% # 根據緯度重新排列地點
+  group_by(date.x, site.y, Country) %>%  # 處理點點大小：把同天site同country的數據分在同一坨
+  summarise(Count = n())# n()功能可以算算同一坨有多少個。接著命名為 Count
+
+split.data2 <- split.data %>%
+  left_join(
+    raw.data %>%
+      dplyr::select(Site, Latitude, Longitude) %>%
+      distinct(), by = c("site.y" = "Site"))
+
+i.want.set3 <- brewer.pal(length(unique(split.data$Country)), "Set3")
+#set1_colors：指定點點顏色為Set3！
+#unique()：獲取該欄位中所有不重複的值，也就是所有不同的國家。
+#length()：計算不重複值的數量，就是總共有幾個國家
+#brewer.pal(n, "Set3")：從 RColorBrewer 的 Set3 調色板中提取 n 種顏色
+
+ggplot(split.data2, aes(x =date.x, y = site.y, size = Count, color = Country)) +
+  geom_point(alpha = 0.4) +  
+  scale_size_continuous(name = "Count", range = c(2, 8)) +  # 調整點大小
+  scale_color_manual(values = i.want.set3) +  
+  scale_x_date(date_labels = "%m/%d", date_breaks = "1 month") +
+  labs(
+    title = "Coral Spawning Observed in 2016",
+    x = "Month",
+    y = "Site",
+    color = "Country") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        scale_fill_discrete(name = "Country")) +
+  guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
+
+split.data2$Country <- factor(split.data2$Country)
+```
+*****
+Notes   
+World spawning figure:  
+-	I think the latitude order is messed up? Bitoujiao shouldn’t be at the bottom?   
+-	Change title to “Coral spawning observed in 2016”  
+
+##### Spawning data from Taiwan and Japan
+result here 
+```{r, warning=F, echo=F, message=F, fig.align='center', fig.cap="**Figure 4**:_________"}
+genus.tj.day <- ggplot(data = spawning.jptw, aes(x = Genus, y = DoSRtNFM, color = Country)) + 
+  geom_boxplot() + 
+  ggtitle("Spawning Time Comparison", subtitle = "different genus in Japan and Taiwan") + 
+  ylab("DoSRtNFM*") + 
+  theme(
+    plot.title = element_text(size=16),
+    plot.subtitle = element_text(size=12))
+genus.tj.day
+```
+##### Stats
+```{r, warning=F}
+#check normality----
+par(mfrow = c(1, 2))
+hist(spawning.jptw$DoSRtNFM)
+qqnorm(spawning.jptw$DoSRtNFM, main = 'Normal')
+qqline(spawning.jptw$DoSRtNFM)
+```
+```{r}
+#check data number----
+J.genus <- spawning.jptw %>% 
+          filter(Country == "Japan") %>% 
+          dplyr::select(Genus)
+summary(as.factor(J.genus$Genus))
+T.genus <- spawning.jptw %>% 
+  filter(Country == "Taiwan") %>% 
+  dplyr::select(Genus)
+summary(as.factor(T.genus$Genus))
+```
+sample size of *Lobophyllia* is too small, so there's no comparison below
+
+***
+
+```{r, warning=F}
+#wilcoxon----
+Coelastrea <- spawning.jptw %>%
+  filter(Genus %in% "Coelastrea",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Coelastrea)
+
+Dipsastraea <- spawning.jptw %>%
+  filter(Genus %in% "Dipsastraea",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Dipsastraea)
+
+Favites <- spawning.jptw %>%
+  filter(Genus %in% "Favites",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Favites)
+
+Galaxea <- spawning.jptw %>%
+  filter(Genus %in% "Galaxea",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Galaxea)
+
+Goniastrea <- spawning.jptw %>%
+  filter(Genus %in% "Goniastrea",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Goniastrea)
+
+Platygyra <- spawning.jptw %>%
+  filter(Genus %in% "Platygyra",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Platygyra)
+
+Porites <- spawning.jptw %>%
+  filter(Genus %in% "Porites",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Porites)
+```
+
+
+### Discussion
+Interpret the results here
+
+
+### References 
+Baird AH, Guest JR, Edwards AJ, Bauman AG, Bouwmeester J, Mera H, Abrego D, Alvarez-Noriega M, Babcock RC, Barbosa MB, et al. 2021. An Indo-Pacific coral spawning database. Sci Data. 8(1):35. doi:10.1038/s41597-020-00793-8.  
+
+Lin C-H, Takahashi S, Mulla AJ, Nozawa Y. 2021. Moonrise timing is key for synchronized spawning in coral Dipsastraea speciosa. Proc Natl Acad Sci USA. 118(34):e2101985118. doi:10.1073/pnas.2101985118.
+
+
+
+
+
+
+
+
+
+```{r}
+split.data <- raw.data %>%
+  separate(Date, into = c("day", "month", "year"), sep = "/") %>% #先把年月日拆開才能篩選2016
+  filter(year == 2016) %>%
+  mutate(
+    date.x = as.Date(paste(year, month, day, sep = "-"), "%Y-%m-%d"),
+    site.y = fct_reorder(Site, Latitude, .desc = FALSE)) %>% # 根據緯度重新排列地點
+  group_by(date.x, site.y, Country) %>%  # 處理點點大小：把同天site同country的數據分在同一坨
+  summarise(Count = n())# n()功能可以算算同一坨有多少個。接著命名為 Count
+
+split.data2 <- split.data %>%
+  left_join(
+    raw.data %>%
+      dplyr::select(Site, Latitude, Longitude) %>%
+      distinct(), by = c("site.y" = "Site"))
+
+i.want.set3 <- brewer.pal(length(unique(split.data$Country)), "Set3")
+#set1_colors：指定點點顏色為Set3！
+#unique()：獲取該欄位中所有不重複的值，也就是所有不同的國家。
+#length()：計算不重複值的數量，就是總共有幾個國家
+#brewer.pal(n, "Set3")：從 RColorBrewer 的 Set3 調色板中提取 n 種顏色
+
+ggplot(split.data, aes(x =date.x, y = site.y, size = Count, color = Country)) +
+  geom_point(alpha = 0.4) +  
+  scale_size_continuous(name = "Count", range = c(2, 8)) +  # 調整點大小
+  scale_color_manual(values = i.want.set3) +  
+  scale_x_date(date_labels = "%m/%d", date_breaks = "1 month") +
+  labs(
+    title = "Sampling Distribution by Date and Site in 2016",
+    x = "Date (2016)",
+    y = "Site (ordered by latitude)",
+    color = "Country") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        scale_fill_discrete(name = "Country")) +
+  guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
+
+split.data2$Country <- factor(split.data2$Country)
+```
+
+```{r}
+# Figure 1: World map with all the observed coral spawning sites.
+color_palette <- colorFactor(palette = "Set3", domain = levels(split.data2$Country))
+leaflet(data = split.data2) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    lng = ~Longitude,
+    lat = ~Latitude,
+    popup = ~site.y,
+    fillOpacity = 1,
+    radius = 6,
+    weight = 0.5,
+    color = "black",
+    fillColor = ~color_palette(Country))
+```
+
+```{r}
+# select the countries needed (Taiwan & Japan)
+spawning.jptw <- raw.data %>% 
+  filter(Country %in% c('Japan', 'Taiwan')) %>%
+  filter(Genus %in% c('Galaxea', 'Lobophyllia', 'Coelastrea', 'Dipsastraea', 'Favites', 'Goniastrea', 'Platygyra', 'Porites'))
+
+# delete the unneeded columns
+spawning.jptw[ , c('Subsite', 'O_n', 'Depth_m', 'N', 'No_start', 'Quality_start', 'No_end', 'Quality_end', 'Gamete_release', 'Situation', 'Timezone', 'Reference', 'Comments')] <- list(NULL)
+spawning.jptw$color <- ifelse(spawning.jptw$Country == "Japan", "#F8766D", "#00BFC4")
+```
+
+```{r}
+genus.tj.day <- ggplot(data = spawning.jptw, aes(x = Genus, y = DoSRtNFM, color = Country)) + 
+  geom_boxplot() + 
+  ggtitle("Spawning Time Comparison", subtitle = "different genus in Japan and Taiwan") + 
+  ylab("DoSRtNFM*") + 
+  theme(
+    plot.title = element_text(size=20),
+    plot.subtitle = element_text(size=12))
+genus.tj.day
+```
+  
+*Date of Spawning Relative to Nearest Full Moon
+```{r}
+#check normality----
+par(mfrow = c(1, 2))
+hist(spawning.jptw$DoSRtNFM)
+qqnorm(spawning.jptw$DoSRtNFM, main = 'Normal')
+qqline(spawning.jptw$DoSRtNFM)
+```
+```{r}
+#check data number----
+J.genus <- spawning.jptw %>% 
+          filter(Country == "Japan") %>% 
+          dplyr::select(Genus)
+summary(as.factor(J.genus$Genus))
+T.genus <- spawning.jptw %>% 
+  filter(Country == "Taiwan") %>% 
+  dplyr::select(Genus)
+summary(as.factor(T.genus$Genus))
+```
+sample size of *Lobophyllia* is too small, so there's no comparison below
+
+***
+
+```{r}
+#wilcoxon----
+Coelastrea <- spawning.jptw %>%
+  filter(Genus %in% "Coelastrea",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Coelastrea)
+
+Dipsastraea <- spawning.jptw %>%
+  filter(Genus %in% "Dipsastraea",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Dipsastraea)
+
+Favites <- spawning.jptw %>%
+  filter(Genus %in% "Favites",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Favites)
+
+Galaxea <- spawning.jptw %>%
+  filter(Genus %in% "Galaxea",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Galaxea)
+
+Goniastrea <- spawning.jptw %>%
+  filter(Genus %in% "Goniastrea",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Goniastrea)
+
+Platygyra <- spawning.jptw %>%
+  filter(Genus %in% "Platygyra",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Platygyra)
+
+Porites <- spawning.jptw %>%
+  filter(Genus %in% "Porites",
+         Country %in% c("Taiwan", "Japan"))
+wilcox.test(DoSRtNFM ~ Country, data = Porites)
+```
+
+```{r}
+split <- raw.data %>%
+  separate(Date, into = c("day", "month", "year"), sep = "/")
+summary(as.factor(split$year))
+max(summary(as.factor(split$year)))
+```
+
+```{r}
+split.data <- raw.data %>%
+  separate(Date, into = c("day", "month", "year"), sep = "/") %>% #先把年月日拆開才能篩選2016
+  filter(year == 2016) %>%
+  mutate(
+    date.x = as.Date(paste(year, month, day, sep = "-"), "%Y-%m-%d"),
+    site.y = fct_reorder(Site, Latitude, .desc = FALSE)) %>% # 根據緯度重新排列地點
+  group_by(date.x, site.y, Country) %>%  # 處理點點大小：把同天site同country的數據分在同一坨
+  summarise(Count = n())# n()功能可以算算同一坨有多少個。接著命名為 Count
+
+split.data2 <- split.data %>%
+  left_join(
+    raw.data %>%
+      dplyr::select(Site, Latitude, Longitude) %>%
+      distinct(), by = c("site.y" = "Site"))
+
+i.want.set3 <- brewer.pal(length(unique(split.data$Country)), "Set3")
+#set1_colors：指定點點顏色為Set3！
+#unique()：獲取該欄位中所有不重複的值，也就是所有不同的國家。
+#length()：計算不重複值的數量，就是總共有幾個國家
+#brewer.pal(n, "Set3")：從 RColorBrewer 的 Set3 調色板中提取 n 種顏色
+
+ggplot(split.data2, aes(x =date.x, y = site.y, size = Count, color = Country)) +
+  geom_point(alpha = 0.4) +  
+  scale_size_continuous(name = "Count", range = c(2, 8)) +  # 調整點大小
+  scale_color_manual(values = i.want.set3) +  
+  scale_x_date(date_labels = "%m/%d", date_breaks = "1 month") +
+  labs(
+    title = "Sampling Distribution by Date and Site in 2016",
+    x = "Date (2016)",
+    y = "Site (ordered by latitude)",
+    color = "Country") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        scale_fill_discrete(name = "Country")) +
+  guides(color = guide_legend(override.aes = list(size = 3, alpha = 1)))
+
+split.data2$Country <- factor(split.data2$Country)
+```
+
+```{r}
+# Figure 1: World map with all the observed coral spawning sites.
+color_palette <- colorFactor(palette = "Set3", domain = levels(split.data2$Country))
+leaflet(data = split.data2) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    lng = ~Longitude,
+    lat = ~Latitude,
+    popup = ~site.y,
+    fillOpacity = 1,
+    radius = 6,
+    weight = 0.5,
+    color = "black",
+    fillColor = ~color_palette(Country))
+```
+
+
+
